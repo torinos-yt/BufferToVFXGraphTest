@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "com.unity.recorder": "3.0.0-pre.2",
+    "com.unity.ide.vscode": "1.2.3",
+    "com.unity.render-pipelines.high-definition": "12.0.0",
+    "com.unity.timeline": "1.6.0-pre.5",
+    "com.unity.modules.jsonserialize": "1.0.0"
+  }
+}

@@ -1,0 +1,74 @@
+#pragma kernel Init
+#pragma kernel Update
+#pragma kernel Copy
+
+#define STATE 8.0
+
+uint3 _CellSize;
+uint _CellCount;
+
+RWStructuredBuffer<float> _CellBuffer;
+RWStructuredBuffer<float> _CopyBuffer;
+
+uint GetCellCoord(uint3 id)
+{
+    return id.z * _CellSize.x * _CellSize.y +
+            id.y * _CellSize.x + id.x;
+}
+
+[numthreads(8,8,8)]
+void Init (uint3 id : SV_DispatchThreadID)
+{
+    uint p = GetCellCoord(id);
+    if(p >= _CellCount) return;
+
+    if(length((int3)id - (int3)(_CellSize-1) / 2) > _CellSize.x * .75)
+        _CopyBuffer[p] = STATE -1.0;
+    else
+        _CopyBuffer[p] = 0;
+
+    _CellBuffer[p] = 0;
+}
+
+[numthreads(8,8,8)]
+void Update (uint3 id : SV_DispatchThreadID)
+{
+    uint p = GetCellCoord(id);
+    if(p >= _CellCount) return;
+
+    float value = _CopyBuffer[p];
+    int sum = 0;
+
+    for(int x = -1; x <= 1; x++)
+    {
+        for(int y = -1; y <= 1; y++)
+        {
+            for(int z = -1; z <= 1; z++)
+            {
+                int neighbourId = p + GetCellCoord(uint3(x,y,z));
+
+                sum += _CopyBuffer[neighbourId] == STATE - 1;
+            }
+        }
+    }
+
+    if(value > 0)
+    {
+        if(sum != 4)
+            _CellBuffer[p] = value - 1;
+    }
+    else
+    {
+        if(sum == 4)
+            _CellBuffer[p] = STATE - 1;
+    }
+}
+
+[numthreads(8,8,8)]
+void Copy (uint3 id : SV_DispatchThreadID)
+{
+    uint p = GetCellCoord(id);
+    if(p >= _CellCount) return;
+
+    _CopyBuffer[p] = _CellBuffer[p];
+}
